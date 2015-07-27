@@ -187,7 +187,9 @@ def sync(fund_pool):
 
     for worker in workers.values():
         worker.join()
+
     print("All jobs have been done.")
+
     for category, priority_queue in fund_output_queues.items():
         print("Category-{0}".format(category))
         driver.setup_output(0)
@@ -197,9 +199,11 @@ def sync(fund_pool):
             driver.print_row((fund.time, fund.secId, fund.name,
                               fund.nav, fund.price, fund.pbr))
 
-
-def sort(fund_pool):
-    pass
+def show_fund_pool(fund_pool):
+    for category, pool in fund_pool.items():
+        print("Category {category}".format(category=category))
+        for sec_id, extras in pool.items():
+            print("{0}, {1}".format(sec_id, extras))
 
 def main():
     parser = _initialize_input_parser()
@@ -208,18 +212,10 @@ def main():
     fund_pool = _parse_input_1(config)
     # show_fund_pool(fund_pool)
     begin = time.time()
-    ordered = sync(fund_pool)
+    sync(fund_pool)
     end = time.time()
     print("Time usage: {0} seconds; Workers: {1}"
           .format(end - begin, config['workers']))
-    sorted_fund_pool = sort(fund_pool)
-
-
-def show_fund_pool(fund_pool):
-    for category, pool in fund_pool.items():
-        print("Category {category}".format(category=category))
-        for sec_id, extras in pool.items():
-            print("{0}, {1}".format(sec_id, extras))
 
 
 if __name__ == '__main__':
