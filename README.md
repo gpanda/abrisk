@@ -1,2 +1,2 @@
 # abrisk
-Structured fund monitor
+Structured funds monitor
