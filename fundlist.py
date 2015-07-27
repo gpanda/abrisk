@@ -14,6 +14,7 @@ __author__ = 'gpanda'
 import argparse
 import collections
 import fileinput
+import logging
 import os
 import pprint
 import re
@@ -25,6 +26,13 @@ import time
 import Queue
 
 import driver
+
+LOG_FORMAT = "%(asctime)-15s %(threadName)s %(message)s"
+logging.basicConfig(format=LOG_FORMAT)
+LOG = logging.getLogger("abrisk")
+#LOG.addHandler(logging.StreamHandler(sys.stdout))
+LOG.setLevel(logging.INFO)
+
 
 SEC_ID_PATTERN_STRING = "^\d{6}$"
 SEC_ID_PATTERN = re.compile(SEC_ID_PATTERN_STRING)
@@ -80,11 +88,17 @@ def _initialize_input_parser():
                         nargs="?",
                         metavar="COUNT",
                         help="Configure working thread count.")
+
+    parser.add_argument('-v', '--verbose',
+                        action="store_true",
+                        help="Show debug messages.")
+
     return parser
 
 def _parse_input_0(opts):
 
     global config
+    global LOG
 
     # retrieve fund list files
     files = opts['fin']
@@ -96,6 +110,10 @@ def _parse_input_0(opts):
     workers = int(opts['workers'])
     if  workers > 0:
         config['workers'] = workers
+
+    if opts['verbose']:
+        config['debug'] = True
+        LOG.setLevel(logging.DEBUG)
 
     return config
 
@@ -123,12 +141,14 @@ def work_flow(input_queue, output_queue):
     local = threading.local()
     local.thread_name = threading.current_thread().getName()
 
-    print("*** Thread-{0}:{1} *** Enters work_flow >>>"
-          .format(local.thread_name, time.time()))
+    LOG.debug("*** Enters work_flow() >>>")
+    # print("*** Thread-{0}:{1} *** Enters work_flow >>>"
+    #       .format(local.thread_name, time.time()))
 
     def retrieve_data(sec_id):
-        print("Thread-{0}: Retrieving data for {1}"
-              .format(local.thread_name, sec_id))
+        LOG.debug("Retrieving data for %s", sec_id)
+        # print("Thread-{0}: Retrieving data for {1}"
+        #       .format(local.thread_name, sec_id))
         fund_raw_data = driver.getpbr(sec_id)
         if not fund_raw_data:
             return None
@@ -144,19 +164,22 @@ def work_flow(input_queue, output_queue):
 
     for category, queue in  input_queue.items():
         try:
-            print("Thread-{0}: Switching to category {1}"
-                  .format(local.thread_name, category))
+            LOG.debug("Switching to category %s", category)
+            # print("Thread-{0}: Switching to category {1}"
+            #      .format(local.thread_name, category))
             while not queue.empty():
                 sec_id = queue.get(False)
                 fund = retrieve_data(sec_id)
                 if fund:
                     output_queue[category].put(fund)
-            print("Thread-{0}: Leaving category {1}"
-                  .format(local.thread_name, category))
+            LOG.debug("Leaving category %s", category)
+            # print("Thread-{0}: Leaving category {1}"
+            #       .format(local.thread_name, category))
         except Queue.Empty as e:
             print(e)
-    print("*** Thread-{0} *** Exits from work_flow <<<"
-          .format(local.thread_name))
+    LOG.debug("*** Exits from work_flow() <<<")
+    # print("*** Thread-{0} *** Exits from work_flow <<<"
+    #      .format(local.thread_name))
 
 
 def sync(fund_pool):
@@ -188,10 +211,11 @@ def sync(fund_pool):
     for worker in workers.values():
         worker.join()
 
-    print("All jobs have been done.")
+    LOG.debug("All jobs have been done.")
 
     for category, priority_queue in fund_output_queues.items():
-        print("Category-{0}".format(category))
+        LOG.info("Category-%s", category)
+        # print("Category-{0}".format(category))
         driver.setup_output(0)
         driver.print_header()
         while not priority_queue.empty():
@@ -201,9 +225,11 @@ def sync(fund_pool):
 
 def show_fund_pool(fund_pool):
     for category, pool in fund_pool.items():
-        print("Category {category}".format(category=category))
+        LOG.debug("Category %s", category)
+        # print("Category {category}".format(category=category))
         for sec_id, extras in pool.items():
-            print("{0}, {1}".format(sec_id, extras))
+            LOG.debug("%s, %s", sec_id, extras)
+            # print("{0}, {1}".format(sec_id, extras))
 
 def main():
     parser = _initialize_input_parser()
@@ -214,8 +240,10 @@ def main():
     begin = time.time()
     sync(fund_pool)
     end = time.time()
-    print("Time usage: {0} seconds; Workers: {1}"
-          .format(end - begin, config['workers']))
+    LOG.info("Time usage: %s seconds; Workers: %s",
+             end - begin, config['workers'])
+    # print("Time usage: {0} seconds; Workers: {1}"
+    #       .format(end - begin, config['workers']))
 
 
 if __name__ == '__main__':

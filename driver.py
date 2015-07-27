@@ -9,6 +9,10 @@ import re
 import requests
 import sys
 
+import codecs
+import locale
+sys.stdout = codecs.getwriter(locale.getpreferredencoding())(sys.stdout)
+
 
 import HTMLParser
 htmlparser = HTMLParser.HTMLParser()
