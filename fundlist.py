@@ -7,7 +7,7 @@ __author__ = 'gpanda'
 
 """References:
 
-[1] thread-safe queque, http://pymotw.com/2/Queue/
+[1] easy thread-safe queque, http://pymotw.com/2/Queue/
 
 """
 
@@ -30,7 +30,7 @@ import driver
 LOG_FORMAT = "%(asctime)-15s %(threadName)s %(message)s"
 logging.basicConfig(format=LOG_FORMAT)
 LOG = logging.getLogger("abrisk")
-#LOG.addHandler(logging.StreamHandler(sys.stdout))
+LOG.addHandler(logging.StreamHandler(sys.stdout))
 LOG.setLevel(logging.INFO)
 
 
@@ -51,13 +51,15 @@ class Fund(object):
 
     """
 
-    def __init__(self, secId, name=None, time=None, price=float(0), nav=float(1)):
+    def __init__(self, secId, name=None, time=None, price=float(0),
+                 volume=float(0), nav=float(1)):
         """Initialize Fund object
 
         :param secId: security id
         :param name: name
         :param time: data timestamp
         :param price: security price
+        :param volume: exchange volume (unit: 0.1 billion)
         :param nav: security (fund) net asset value or book value
 
         """
@@ -65,6 +67,7 @@ class Fund(object):
         self.name = name
         self.time = time
         self.price = price
+        self.volume = volume
         self.nav = nav
         self.pbr = self.price / self.nav
 
@@ -77,21 +80,50 @@ def _initialize_input_parser():
         description="Show me interesting funds."
     )
 
-    parser.add_argument('--fin',
-                        default="default.0",
-                        nargs="*",
-                        metavar="FILE",
-                        help="Configure security list input file.")
+    parser.add_argument(
+        '--fin',
+        default="default.0",
+        nargs="*",
+        metavar="FILE",
+        help="Security list input file."
+    )
 
-    parser.add_argument('--workers',
-                        default=5,
-                        nargs="?",
-                        metavar="COUNT",
-                        help="Configure working thread count.")
+    parser.add_argument(
+        '--workers',
+        default=5,
+        nargs="?",
+        metavar="COUNT",
+        help="Working thread count."
+    )
 
-    parser.add_argument('-v', '--verbose',
-                        action="store_true",
-                        help="Show debug messages.")
+    parser.add_argument(
+        '--head', '-H',
+        default=0,
+        nargs="?",
+        metavar="COUNT",
+        help="How many items in the front rank to show."
+    )
+
+    parser.add_argument(
+        '--tail', '-T',
+        default=0,
+        nargs="?",
+        metavar="COUNT",
+        help="How many items in the behind rank to show."
+    )
+
+    parser.add_argument(
+        '--funds', '-f',
+        nargs="*",
+        metavar="FUND INDEX",
+        help="One or more specified funds."
+    )
+
+    parser.add_argument(
+        '-v', '--verbose',
+        action="store_true",
+        help="Show debug messages."
+    )
 
     return parser
 
@@ -111,6 +143,21 @@ def _parse_input_0(opts):
     if  workers > 0:
         config['workers'] = workers
 
+
+    head = int(opts['head'])
+    if head > 0:
+        config['head'] = head
+
+    tail = int(opts['tail'])
+    if tail > 0:
+        config['tail'] = tail
+
+    funds = opts['funds']
+    if not isinstance(funds, list):
+        funds = [funds]
+
+    config['funds'] = funds
+
     if opts['verbose']:
         config['debug'] = True
         LOG.setLevel(logging.DEBUG)
@@ -120,6 +167,7 @@ def _parse_input_0(opts):
 def _parse_input_1(config):
     # pprint.pprint(config)
     fund_pool = collections.OrderedDict()
+
     files = config['fin']
     for file in files:
         if os.path.exists(file):
@@ -133,6 +181,14 @@ def _parse_input_1(config):
                 sec_id = string.strip(fields[0])
                 if is_sec_id(sec_id):
                     fund_pool[filename][sec_id] = [].extend(fields[1:])
+
+    funds = config['funds']
+    if funds[0]:
+       category = 'Quick_show'
+       fund_pool[category] = collections.OrderedDict()
+       for fund in funds:
+           if is_sec_id(fund):
+               fund_pool[category][fund] = []
 
     return fund_pool
 
@@ -156,7 +212,8 @@ def work_flow(input_queue, output_queue):
                     name=fund_raw_data[2],
                     time=fund_raw_data[0],
                     price=fund_raw_data[4],
-                    nav=fund_raw_data[3]
+                    volume=fund_raw_data[5],
+                    nav=fund_raw_data[3],
                     )
         # driver.show(fund_raw_data)
         return fund
@@ -213,15 +270,22 @@ def sync(fund_pool):
 
     LOG.debug("All jobs have been done.")
 
+    return fund_output_queues
+
+
+def report_fund_list(fund_output_queues):
+
     for category, priority_queue in fund_output_queues.items():
         LOG.info("Category-%s", category)
         # print("Category-{0}".format(category))
-        driver.setup_output(0)
+        driver.setup_output(0, LOG)
         driver.print_header()
         while not priority_queue.empty():
             fund = priority_queue.get()
             driver.print_row((fund.time, fund.secId, fund.name,
-                              fund.nav, fund.price, fund.pbr))
+                              fund.nav, fund.price, fund.volume,
+                              fund.pbr))
+
 
 def show_fund_pool(fund_pool):
     for category, pool in fund_pool.items():
@@ -238,8 +302,9 @@ def main():
     fund_pool = _parse_input_1(config)
     # show_fund_pool(fund_pool)
     begin = time.time()
-    sync(fund_pool)
+    fund_list = sync(fund_pool)
     end = time.time()
+    report_fund_list(fund_list)
     LOG.info("Time usage: %s seconds; Workers: %s",
              end - begin, config['workers'])
     # print("Time usage: {0} seconds; Workers: {1}"

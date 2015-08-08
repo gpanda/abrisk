@@ -72,10 +72,11 @@ def get_page_content(page):
         content = r.content.decode(CHINESE_WEB_PAGE_ENCODING) \
             .encode(UTF8_ENCODING)
     except IOError:
-        print("Give up get request ({0}) after {1} seconds.".format(
-            timeout,
-            page,
-        ))
+        # print("Give up get request ({page}) after {timeout} seconds.".\
+        #     format({'page': page, 'timeout': timeout}))
+        # print("Error occurred during request of ({page}) ". \
+        #      format({'page': page}))
+        LOG.info("Error occurred during request of %s", page)
 
     # signal.alarm(0)          # Disable the alarm
 
@@ -145,11 +146,12 @@ def getpbr(qid):
     _name = quote[0]
     _time = quote[31]
     _price = float(quote[3])
+    _volume = float(quote[9]) / 10 ** 8
 
     # calculate dynmaic Price/Book ratio
     _pbr = _price / _nav
 
-    return (_time, qid, _name, _nav, _price, _pbr)
+    return (_time, qid, _name, _nav, _price, _volume, _pbr)
 
 # =============================================================================
 # OUT_FORMAT
@@ -160,15 +162,15 @@ CMD_FORMAT = 'cmd'
 OUTPUT_PATTERN = {
     'csv': {
         'header':
-            u"{Time:^8},{QId:^8},{QName:^10},{NAV:>10},{Price:^6},{PBRatio:<9},",
+            u"{Time:^8},{QId:^8},{QName:^10},{NAV:>10},{Price:^6},{Volume:^6},{PBRatio:<9},",
         'row':
-            u"|{Time:^8},{QId:^8},{QName:^6},{NAV:>10},{Price:^6},{PBRatio:<9.2%},"
+            u"|{Time:^8},{QId:^8},{QName:^6},{NAV:>10},{Price:^6},{Volume:^6.3},{PBRatio:<9.2%},"
     },
     'cmd': {
         'header':
-            u"|{Time:^8}|{QId:^8}|{QName:^10}|{NAV:>10}|{Price:^6}|{PBRatio:<9}|",
+            u"|{Time:^8}|{QId:^8}|{QName:^10}|{NAV:>10}|{Price:^6}|{Volume:^6}|{PBRatio:<9}|",
         'row':
-            u"|{Time:^8}|{QId:^8}|{QName:^6}|{NAV:>10}|{Price:^6}|{PBRatio:<9.2%}|"
+            u"|{Time:^8}|{QId:^8}|{QName:^6}|{NAV:>10}|{Price:^6}|{Volume:^6.3}|{PBRatio:<9.2%}|"
     }
 }
 
@@ -176,6 +178,13 @@ OUTPUT_PATTERN = {
 CURRENT_OUTPUT_FORMAT = None
 CURRENT_FOUT = None
 
+LOG = None
+
+def print_table_row_log(pattern, row_values):
+    row = pattern.format(**row_values)
+    if LOG:
+        LOG.critical(row)
+    return
 
 def print_table_row(pattern, row_values, fout):
     row = pattern.format(**row_values)
@@ -193,6 +202,7 @@ def print_header():
         'QName': u"Quote Name",
         'NAV': u"Book Value",
         'Price': u"Price",
+        'Volume': u"Volume",
         'PBRatio': u"P/B Ratio",
     }
 
@@ -210,7 +220,8 @@ def print_row(quote):
         'QName': quote[2],
         'NAV': quote[3],
         'Price': quote[4],
-        'PBRatio': quote[5],
+        'Volume': quote[5],
+        'PBRatio': quote[6],
     }
 
     print_table_row(pattern, row_values, CURRENT_FOUT)
@@ -242,7 +253,9 @@ OUTPUT_MAP = {
     1: csv,
 }
 
-def setup_output(mode):
+def setup_output(mode, logger):
+    global LOG
+    LOG = logger
     OUTPUT_MAP[mode]()
 
 
