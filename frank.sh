@@ -1,6 +1,6 @@
 #!/bin/sh
 
-CMD="./fundlist.py --fin B A --workers 10"
+CMD="python ./fundlist.py --fin B A --workers 10"
 time=`date +'%H%M'`
 weekday=`date +'%w'`
 
