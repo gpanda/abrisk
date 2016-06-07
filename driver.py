@@ -11,13 +11,13 @@ import sys
 
 import codecs
 import locale
+print(locale.getpreferredencoding())
 sys.stdout = codecs.getwriter(locale.getpreferredencoding())(sys.stdout)
 
 
 import HTMLParser
 htmlparser = HTMLParser.HTMLParser()
 
-CHINESE_WEB_PAGE_ENCODING = "GB18030"
 UTF8_ENCODING = "UTF-8"
 
 SCHEME = 'http://'
@@ -36,9 +36,11 @@ NAV_FETCH_INTERVAL = 60
 NAV_FETCH_TIMES = -1
 
 # <div id="statuspzgz" class="fundpz"><span class="red bold">2.3142</span><
-NAV_REGEX = \
-    u"<div\s+id=\"statuspzgz\"\s+class=\"fundpz\">" \
-    u"<span\s+class=\"\w+\s+bold\">(\d+\.\d+)</span><"
+#NAV_REGEX = \
+#    u"<div\s+id=\"statuspzgz\"\s+class=\"fundpz\">" \
+#    u"<span\s+class=\"\w+\s+bold\">(\d+\.\d+)</span><"
+#id="gz_gsz">0.7903</span>
+NAV_REGEX = u"id=\"gz_gsz\">(\d+\.\d+)</span>"
 NAV_TIME = \
     u""
 
@@ -64,13 +66,13 @@ def get_page_content(page):
     content = None
 
     # signal.signal(signal.SIGALRM, handler)
-    timeout = 60
+    #timeout = 60
     # signal.alarm(timeout)
 
     try:
-        r = requests.get(page)
-        content = r.content.decode(CHINESE_WEB_PAGE_ENCODING) \
-            .encode(UTF8_ENCODING)
+        resp = requests.get(page)
+        content = resp.content.decode(resp.apparent_encoding)\
+                .encode(UTF8_ENCODING)
     except IOError:
         # print("Give up get request ({page}) after {timeout} seconds.".\
         #     format({'page': page, 'timeout': timeout}))
@@ -83,6 +85,7 @@ def get_page_content(page):
     return content
 
 def search_regex(regex, page):
+    """."""
     results = None
 
     content = get_page_content(page)
@@ -92,27 +95,32 @@ def search_regex(regex, page):
     return results
 
 def get_nav_url(qid):
+    """."""
     return EASTMONEYFUND_QUOTE_PREFIX + str(qid) + URL_HTML_SUFFIX
 
 def get_market(qid):
+    """."""
     if qid / 100000 == 1:
         return MARKET_SZ
     else:
         return MARKET_SH
 
 def get_nav(qid):
+    """."""
     url = get_nav_url(qid)
     results = search_regex(NAV_REGEX, url)
     if results:
         return results[0]
 
 def get_quote_url(qid, market):
+    """."""
     if int(market) == MARKET_SH:
         return HQSINA_QUOTE_PREFIX + HQSINA_QUOTE_SH + str(qid)
     if int(market) == MARKET_SZ:
         return HQSINA_QUOTE_PREFIX + HQSINA_QUOTE_SZ + str(qid)
 
 def get_quote(qid, market):
+    """."""
     url = get_quote_url(qid, market)
     quote_raw = search_regex(HQSINA_QUOTE_PATTERN_REGEX, url)
     if not quote_raw:

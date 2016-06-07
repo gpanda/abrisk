@@ -101,7 +101,7 @@ def _initialize_input_parser():
         default=0,
         nargs="?",
         metavar="COUNT",
-        help="How many items in the front rank to show."
+        help="How many items in the top rank to show."
     )
 
     parser.add_argument(
@@ -109,7 +109,7 @@ def _initialize_input_parser():
         default=0,
         nargs="?",
         metavar="COUNT",
-        help="How many items in the behind rank to show."
+        help="How many items in the bottom rank to show."
     )
 
     parser.add_argument(
@@ -164,17 +164,21 @@ def _parse_input_0(opts):
 
     return config
 
-def _parse_input_1(config):
+
+def _parse_input_1(cfg):
+    """
+    TODO: comments
+    """
     # pprint.pprint(config)
     fund_pool = collections.OrderedDict()
 
-    files = config['fin']
-    for file in files:
-        if os.path.exists(file):
-            filename = os.path.basename(file)
+    files = cfg['fin']
+    for yaf in files:
+        if os.path.exists(yaf):
+            filename = os.path.basename(yaf)
             # print("{filename}".format(filename=filename))
             fund_pool[filename] = collections.OrderedDict()
-            for line in fileinput.input(file):
+            for line in fileinput.input(yaf):
                 if line.startswith("#"):
                     continue
                 fields = line.split(',')
@@ -184,15 +188,19 @@ def _parse_input_1(config):
 
     funds = config['funds']
     if funds[0]:
-       category = 'Quick_show'
-       fund_pool[category] = collections.OrderedDict()
-       for fund in funds:
-           if is_sec_id(fund):
-               fund_pool[category][fund] = []
+        category = 'Quick_show'
+        fund_pool[category] = collections.OrderedDict()
+        for fund in funds:
+            if is_sec_id(fund):
+                fund_pool[category][fund] = []
 
     return fund_pool
 
+
 def work_flow(input_queue, output_queue):
+    """
+    TODO: comments
+    """
 
     local = threading.local()
     local.thread_name = threading.current_thread().getName()
@@ -202,6 +210,9 @@ def work_flow(input_queue, output_queue):
     #       .format(local.thread_name, time.time()))
 
     def retrieve_data(sec_id):
+        """
+        TODO: comments
+        """
         LOG.debug("Retrieving data for %s", sec_id)
         # print("Thread-{0}: Retrieving data for {1}"
         #       .format(local.thread_name, sec_id))
@@ -232,8 +243,8 @@ def work_flow(input_queue, output_queue):
             LOG.debug("Leaving category %s", category)
             # print("Thread-{0}: Leaving category {1}"
             #       .format(local.thread_name, category))
-        except Queue.Empty as e:
-            print(e)
+        except Queue.Empty as exp:
+            print(exp)
     LOG.debug("*** Exits from work_flow() <<<")
     # print("*** Thread-{0} *** Exits from work_flow <<<"
     #      .format(local.thread_name))
@@ -295,11 +306,15 @@ def show_fund_pool(fund_pool):
             LOG.debug("%s, %s", sec_id, extras)
             # print("{0}, {1}".format(sec_id, extras))
 
+
 def main():
+    """
+    TODO: no comments
+    """
     parser = _initialize_input_parser()
     opts = vars(parser.parse_args(sys.argv[1:]))
-    config = _parse_input_0(opts)
-    fund_pool = _parse_input_1(config)
+    cfg = _parse_input_0(opts)
+    fund_pool = _parse_input_1(cfg)
     # show_fund_pool(fund_pool)
     begin = time.time()
     fund_list = sync(fund_pool)
