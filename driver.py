@@ -1,5 +1,5 @@
-#!/usr/bin/python
-# -*- encoding: utf8 -*-
+#!/usr/bin/env python
+# -*- coding: utf8 -*-
 
 from __future__ import print_function
 
@@ -11,8 +11,11 @@ import sys
 
 import codecs
 import locale
-print(locale.getpreferredencoding())
-sys.stdout = codecs.getwriter(locale.getpreferredencoding())(sys.stdout)
+#print(locale.getpreferredencoding())
+#sys.stdout = codecs.getwriter(locale.getpreferredencoding())(sys.stdout)
+
+reload(sys)
+sys.setdefaultencoding('utf8')
 
 
 import HTMLParser
@@ -57,6 +60,9 @@ HQSINA_QUOTE_SZ_PREFIX = HQSINA_QUOTE_PREFIX + HQSINA_QUOTE_SZ
 HQSINA_QUOTE_PATTERN_REGEX = u"var\s+hq_str_.+=\"(.*)\";"
 HQSINA_QUOTE_SEP = u","
 
+# http request header patterns
+HTTP_HEADER_CONTENT_TYPE_CHARSET_REGEX=r"charset=(\w+)"
+
 
 # =============================================================================
 
@@ -71,8 +77,16 @@ def get_page_content(page):
 
     try:
         resp = requests.get(page)
-        content = resp.content.decode(resp.apparent_encoding)\
-                .encode(UTF8_ENCODING)
+        encoding = resp.encoding
+        ct_hdr = resp.headers['Content-Type']
+        if ct_hdr:
+            m = re.search(HTTP_HEADER_CONTENT_TYPE_CHARSET_REGEX, ct_hdr)
+            if m:
+                encoding = m.group(1)
+        content = resp.content
+        if content:
+            content = content.decode(encoding)
+            content = content.encode(UTF8_ENCODING)
     except IOError:
         # print("Give up get request ({page}) after {timeout} seconds.".\
         #     format({'page': page, 'timeout': timeout}))
@@ -267,6 +281,32 @@ def setup_output(mode, logger):
     OUTPUT_MAP[mode]()
 
 
+def test_encoding():
+
+    content = None
+    cs = None
+    url = HQSINA_QUOTE_SZ_PREFIX + "150019"
+    resp = requests.get(url)
+    ct_hdr = resp.headers['Content-Type'];
+    if ct_hdr:
+        m = re.search(HTTP_HEADER_CONTENT_TYPE_CHARSET_REGEX, ct_hdr)
+        if m:
+            cs = m.group(1)
+    content = resp.content
+    if content:
+        if cs:
+            content = content.decode(cs)
+        else:
+            content = content.decode(resp.encoding)
+        content = content.encode(UTF8_ENCODING)
+    #print(u"%s" % content)
+    print("url = %s, resp.encoding = %s, resp hdr charset = %s\ncontent=%s" % 
+          (url, resp.encoding, cs, content))
 
 
+def test():
+    test_encoding()
+
+if __name__ == '__main__':
+    test()
 
