@@ -60,7 +60,13 @@ target/
 .idea/
 *.swp
 history/*
+history.favourites/*
 .venv/*
 tags
 tmp
 .DS_Store
+structuredfunds/*
+A
+B
+A1
+B1
