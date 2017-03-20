@@ -1,0 +1,11 @@
+# url
+http://hq.sinajs.cn/list=sz150019
+http://fund.eastmoney.com/150171.html
+
+# trim white spaces awk '{$1=$1; print}'
+cat 20160719 | awk -F'|' '{print $8}' | awk '{$1=$1;print}'> x
+
+# iconv
+curl http://hq.sinajs.cn/list=sz150019 | iconv -f GBK -t UTF-8 > a
+
+

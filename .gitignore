@@ -63,3 +63,4 @@ history/*
 .venv/*
 tags
 tmp
+.DS_Store
