@@ -249,14 +249,14 @@ def print_row(quote):
     print_table_row(pattern, row_values, CURRENT_FOUT)
 
 # =============================================================================
-def show(tuple):
-    if tuple:
+def show(t):
+    if t:
         global CURRENT_FOUT
         global CURRENT_OUTPUT_FORMAT
         CURRENT_FOUT = sys.stdout
         CURRENT_OUTPUT_FORMAT = CMD_FORMAT
         print_header()
-        print_row(tuple)
+        print_row(t)
 
 def cli():
     global CURRENT_FOUT
