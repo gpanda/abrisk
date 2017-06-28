@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf8 -*-
-
 from __future__ import print_function
 
 __author__ = 'gpanda'
@@ -25,6 +24,7 @@ import time
 
 import Queue
 
+from libs.common import is_sec_id
 import driver
 
 LOG_FORMAT = "%(asctime)-15s %(threadName)s %(message)s"
@@ -33,16 +33,7 @@ LOG = logging.getLogger("abrisk")
 LOG.addHandler(logging.StreamHandler(sys.stdout))
 LOG.setLevel(logging.INFO)
 
-
-SEC_ID_PATTERN_STRING = "^\d{6}$"
-SEC_ID_PATTERN = re.compile(SEC_ID_PATTERN_STRING)
-
 config = {}
-
-def is_sec_id(chars):
-    return SEC_ID_PATTERN.match(chars)
-
-
 
 class Fund(object):
     """Fund data structure

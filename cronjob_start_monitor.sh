@@ -1,13 +1,7 @@
 cd `dirname $0`
 . getos.sh
 . .venv/bin/activate
-./frank.sh
-./frank2.sh
+./monitor.py --fin B1.mon A1.mon today.mon &
 deactivate
-. funcs.sh
-
-./gen-ctags.sh
-
 echo "Cron job done."
-print_separator
 cd -

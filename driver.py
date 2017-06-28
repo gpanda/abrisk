@@ -11,6 +11,9 @@ import sys
 
 import codecs
 import locale
+
+from libs.common import print_table_row
+
 #print(locale.getpreferredencoding())
 #sys.stdout = codecs.getwriter(locale.getpreferredencoding())(sys.stdout)
 
@@ -202,16 +205,6 @@ CURRENT_FOUT = None
 
 LOG = None
 
-def print_table_row_log(pattern, row_values):
-    row = pattern.format(**row_values)
-    if LOG:
-        LOG.critical(row)
-    return
-
-def print_table_row(pattern, row_values, fout):
-    row = pattern.format(**row_values)
-    print(row, file=fout)
-    return
 
 def print_header():
     if not CURRENT_OUTPUT_FORMAT:
