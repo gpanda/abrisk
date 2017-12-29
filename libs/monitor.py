@@ -66,9 +66,19 @@ def ge(s, i, e):
     check_trigger(i)
     return TRIGGER_MAP[i][0](s) >= e
 
+def lt(s, i, e):
+    check_trigger(i)
+    return TRIGGER_MAP[i][0](s) < e
+
+def gt(s, i, e):
+    check_trigger(i)
+    return TRIGGER_MAP[i][0](s) > e
+
 TRIGGER_FUNC_MAP = {
     '<=': (le, '<=', '小于或等于'),
     '>=': (ge, '>=', '大于或等于'),
+    '<': (lt, '<', '小于'),
+    '>': (gt, '>', '大于'),
 }
 
 TRIGGER_MESSAGE_PATTERN = \
@@ -171,7 +181,7 @@ def parse_input_1(cfg):
     files = cfg['fin']
     for f in files:
         if f is None:
-            break;
+            break
         with f as f:
             rule_sets[f.name] = OrderedDict()
             for line in f:
