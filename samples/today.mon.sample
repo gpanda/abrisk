@@ -1,0 +1,12 @@
+# TRIGGER MAP
+# Type  Name    Unit
+# 1     Price   Chinese Yuan
+# 2     P/B
+# 3     Volume  0.1B Chinese Yuan
+# 4     NAV     Chinese Yuan
+
+# Long signals
+150222  中航军B     4   <  .280
+150222  中航军B     1   <  .270
+150222  中航军B     1   >= .310
+150222  中航军B     2   >=  1.02
