@@ -48,14 +48,17 @@ def pbr(sec):
 def volume(sec):
     return sec.volume
 
+def nav(sec):
+    return sec.nav
+
 TRIGGER_MAP = {
-    0: (3, '类型数量'),
     1: (price, '价格(元)'),
     2: (pbr, ' 市净率 '),
     3: (volume, '交易量(亿)'),
+    4: (nav, '净值(元)'),
 }
 def check_trigger(i):
-    if i < 0 or i > TRIGGER_MAP[0][0]:
+    if i < 1 or i > len(TRIGGER_MAP):
         raise Exception('Invalid trigger!')
 
 def le(s, i, e):
