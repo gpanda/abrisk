@@ -59,12 +59,15 @@ target/
 # Gpanda's additions
 .idea/
 *.swp
-history/*
-history.favourites/*
 .venv/*
 tags
-tmp
 .DS_Store
+octave-workspace
+
+
+history/*
+history.favourites/*
+tmp
 structuredfunds/*
 A
 B
