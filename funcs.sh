@@ -20,6 +20,7 @@ record_history () {
         [ "$time" -gt "1600" ] \
                 && _date=$(date +'%Y%m%d')
     fi
+    [ -z "$_date" ] && return
     f="$FOLDER/$_date"
     file_exists "$f" || $CMD > "$f"
     exit
