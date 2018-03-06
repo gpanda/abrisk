@@ -21,6 +21,5 @@ set -o nounset                              # Treat unset variables as an error
 
 ./getdat.sh $1
 
-echo $0
-# export OCTAVE_EXEC_PATH=`dirname $0`
-octave-cli --no-init-file ./show.m "$1"
+# octave-cli --no-init-file ./show.m "$1"
+./show.m "$1"
