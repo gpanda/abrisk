@@ -1,6 +1,7 @@
 cd `dirname $0`
 . getos.sh
-. .venv/bin/activate
+. ./venv.incl
+. $VENV/bin/activate
 ./frank.sh
 ./frank2.sh
 deactivate

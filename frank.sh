@@ -1,6 +1,7 @@
 #!/usr/bin/env sh
 cd `dirname $0`
-. .venv/bin/activate
+. ./venv.incl
+. $VENV/bin/activate
 
 . funcs.sh
 

@@ -1,5 +1,11 @@
 # -*- encoding: utf8 -*-
+""" common library """
+
 from __future__ import print_function
+from __future__ import division
+
+from past.builtins import cmp
+from builtins import object
 
 __author__ = 'gpanda'
 

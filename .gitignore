@@ -63,6 +63,8 @@ target/
 tags
 .DS_Store
 octave-workspace
+# requests_cache
+demo_cache.sqlite
 
 
 history/*

@@ -1,4 +1,8 @@
 # -*- coding: utf8 -*-
+""" monitor library code """
+
+from __future__ import print_function
+from __future__ import absolute_import
 
 __author__ = 'gpanda'
 
@@ -10,18 +14,18 @@ import string
 import sys
 
 from collections import OrderedDict
-from common import print_table_row, is_sec_id
+from .common import print_table_row, is_sec_id
 
 
 LOG_FORMAT = "%(asctime)-15s %(threadName)s %(message)s"
 # logging.basicConfig(format=LOG_FORMAT)
 LOG = logging.getLogger("abrisk.monitor")
-handler = logging.StreamHandler(sys.stdout)
-handler.setFormatter(logging.Formatter(LOG_FORMAT))
-LOG.addHandler(handler)
+HANDLER = logging.StreamHandler(sys.stdout)
+HANDLER.setFormatter(logging.Formatter(LOG_FORMAT))
+LOG.addHandler(HANDLER)
 LOG.setLevel(logging.INFO)
 
-SEPARATOR='\s*(?:\s|,)\s*'
+SEPARATOR = r'\s*(?:\s|,)\s*'
 OUTPUT_PATTERN = {
     'cmd': {
         'header':
@@ -227,7 +231,7 @@ def parse_input_1(cfg):
     return rule_sets
 
 
-""" Output utilities """
+# Output utilities
 
 def print_header():
     """ Print table header. """
@@ -247,12 +251,13 @@ def print_row(r):
     }
     print_table_row(pattern, row_values, sys.stdout)
 
+
 def print_monitor_rules(rule_sets):
     # pprint.pprint(rule_sets)
-    for category, rules in rule_sets.items():
+    for category, rules in list(rule_sets.items()):
         print("Category: " + category)
         print_header()
-        for rule in rules.values():
+        for rule in list(rules.values()):
             for sub_rule in rule:
                 print_row(sub_rule)
 

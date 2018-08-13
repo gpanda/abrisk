@@ -1,14 +1,15 @@
 #!/usr/bin/env sh
 cd `dirname $0`
+
 . ./venv.incl
 . $VENV/bin/activate
 
 . funcs.sh
 
-CMD="python ./fundlist.py --fin B1 A1 --workers 16"
-FOLDER="history.favourites"
+CMD="python ./vix.py"
+FOLDER="vix.history"
 
-record_history
+record_history_us
 
 $CMD
 

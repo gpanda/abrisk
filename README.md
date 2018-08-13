@@ -1,11 +1,14 @@
-abrisk - a structured funds monitor
-===================================
+abrisk - a structured funds investment helper
+=============================================
 
-## samples
-* List
+## Featuers & Samples
+* List quotes
 ![Image](samples/fundlist.png)
 
-* Monitor and trigger
+* Monitor and notification
 ![Image](samples/monitor_trigger.png)
+![Image](samples/vix_monitor.png)
 
+* Plot history
+![Image](samples/plot.png)
 

@@ -1,9 +1,9 @@
 #!/bin/bash - 
 #==============================================================================
 #
-#          FILE: a.sh
+#          FILE: getdat.sh
 # 
-#         USAGE: ./a.sh <fid>
+#         USAGE: ./getdat.sh <fid>
 # 
 #   DESCRIPTION: 
 # 
@@ -13,13 +13,14 @@
 #         NOTES: ---
 #        AUTHOR: Ren, Letian (), retaelppa@gmail.com
 #  ORGANIZATION: SelfRef
-#       CREATED: 01/30/2018 15:20:10
+#       CREATED: 01/30/2018 15:05:33
 #      REVISION:  ---
 #==============================================================================
 
 set -o nounset                              # Treat unset variables as an error
 
-./getdat.sh $1
+# FROM=../history
+FROM=../history.favourites
+grep "$1" -r "$FROM" | sort \
+| awk -F"|" '!/\W0.0\W/ {gsub(/ /, "", $0); print $5, $6, $7, $8}' > "$1"
 
-# octave-cli --no-init-file ./show.m "$1"
-./show.m "$1"

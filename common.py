@@ -6,7 +6,7 @@ __author__ = 'gpanda'
 import datetime
 import re
 
-SEC_ID_PATTERN_STRING = "^\d{6}$"
+SEC_ID_PATTERN_STRING = r"^\d{6}$"
 SEC_ID_PATTERN = re.compile(SEC_ID_PATTERN_STRING)
 
 class Security(object):
@@ -50,4 +50,3 @@ def valid_deal_time():
     if w < 1 or w > 5:
         return False
     return True
-
