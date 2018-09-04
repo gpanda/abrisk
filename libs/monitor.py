@@ -11,11 +11,46 @@ import logging
 import multiprocessing
 import re
 import string
+import subprocess
 import sys
+import time
 
 from collections import OrderedDict
-from .common import print_table_row, is_sec_id
+from datetime import datetime
 
+from .common import print_table_row, is_sec_id, valid_deal_time
+from .driver import get_quote
+
+"""
+# TRIGGER MAP
+# Type  Name    Unit
+# 1     Price   Chinese Yuan
+# 2     P/B     1.000
+# 3     Volume  0.1B Chinese Yuan
+# 4     NAV     Chinese Yuan
+
+# Rule sets example
+#   0   1           2       3       4           5
+# Long term thresholds
+#   ID  SName       Type    Func    Threshold   Misc
+150019  银华锐进    1       <=      .621
+150019  银华锐进    2       <=      1.03
+150224  证券B级     2       <=      1.03
+150224  证券B级     2       >=      1.12
+150224  证券B级     4       <=      .26
+
+# Short term thresholds
+150019  银华锐进    1       <=      .690
+150019  银华锐进    1       >=      .700
+150019  银华锐进    2       >=      1.15
+150019  银华锐进    2       <=      1.10
+
+150019  银华锐进    3       >=      0.3         AM
+150019  银华锐进    3       >=      0.5         PM
+
+"""
+
+NOTIFY = "notify '⚠️  💰ABRISK💰' \"{}\""
 
 LOG_FORMAT = "%(asctime)-15s %(threadName)s %(message)s"
 # logging.basicConfig(format=LOG_FORMAT)
@@ -29,67 +64,85 @@ SEPARATOR = r'\s*(?:\s|,)\s*'
 OUTPUT_PATTERN = {
     'cmd': {
         'header':
-            "|{SId:^8}|{SName:^8}| {Trigger:^10}|{Func:^8}|{Threshold:^8}|",
+            "|{SId:^8}|{SName:^8}| {Type:^10}|{Func:^8}|{Threshold:^8}"
+            "|{Misc:^4}|",
         'row':
-            "|{SId:^8}|{SName:^8}| {Trigger:^10}|{Func:^8}|{Threshold:^8}|",
+            "|{SId:^8}|{SName:^8}| {Type:^10}|{Func:^8}|{Threshold:^8}"
+            "|{Misc:^4}|",
     }
 }
 
 HEADER_LABELS = {
     'SId': '证券代码',
     'SName': '证券名称',
-    'Trigger': '触发条件',
+    'Type': '触发类型',
     'Func': '触发函数',
     'Threshold': '触发阈值',
+    'Misc': '其它约束',
 }
 
-def price(sec):
-    return sec.price
+def price(s):
+    return s.price
 
-def pbr(sec):
-    return sec.pbr
+def pbr(s):
+    return s.pbr
 
-def volume(sec):
-    return sec.volume
+def volume(s):
+    return s.volume
 
-def nav(sec):
-    return sec.nav
+def nav(s):
+    return s.nav
 
-TRIGGER_MAP = {
+TYPE_MAP = {
     1: (price, '价格(元)'),
     2: (pbr, ' 市净率 '),
     3: (volume, '交易量(亿)'),
     4: (nav, '净值(元)'),
 }
+
 def check_trigger(i):
-    if i < 1 or i > len(TRIGGER_MAP):
-        raise Exception('Invalid trigger!')
+    # check trigger type validity
+    if i < 1 or i > len(TYPE_MAP):
+        raise Exception('Invalid trigger type!')
 
 def le(s, i, e):
-    check_trigger(i)
-    return TRIGGER_MAP[i][0](s) <= e
+    return TYPE_MAP[i][0](s) <= e
 
 def ge(s, i, e):
-    check_trigger(i)
-    return TRIGGER_MAP[i][0](s) >= e
+    return TYPE_MAP[i][0](s) >= e
 
 def lt(s, i, e):
-    check_trigger(i)
-    return TRIGGER_MAP[i][0](s) < e
+    return TYPE_MAP[i][0](s) < e
 
 def gt(s, i, e):
-    check_trigger(i)
-    return TRIGGER_MAP[i][0](s) > e
+    return TYPE_MAP[i][0](s) > e
 
-TRIGGER_FUNC_MAP = {
+FUNC_MAP = {
     '<=': (le, '<=', '小于或等于'),
     '>=': (ge, '>=', '大于或等于'),
     '<': (lt, '<', '小于'),
     '>': (gt, '>', '大于'),
 }
 
+def am(s):
+    return 'AM' == datetime.strptime(s.time, '%H:%M:%S').strftime('%p')
+
+def pm(s):
+    return 'PM' == datetime.strptime(s.time, '%H:%M:%S').strftime('%p')
+
+MISC_FUNC_MAP = {
+    'am': (am, '上午'),
+    'pm': (pm, '下午'),
+}
+
+def trigger(r, s):
+    check_trigger(r[2])
+    return ( len(r) < 6 or MISC_FUNC_MAP[r[5].lower()][0](s) ) and \
+            FUNC_MAP[r[3]][0](s, r[2], r[4])
+
+
 TRIGGER_MESSAGE_PATTERN = \
-    "提醒:{stime}: {sid} {sname} {trigger} {tfunc} {threshold}: {value}"
+    "提醒:{stime}: {sid} {sname} {ttype} {tfunc} {threshold} {misc}: {value}"
 
 
 """
@@ -134,7 +187,7 @@ def initialize_input_parser():
         '--rules', '-s',
         type=str,
         nargs="*",
-        metavar="RULE LIST",
+        metavar="RULE",
         help="rule list specified in command line."
     )
 
@@ -245,9 +298,10 @@ def print_row(r):
     row_values = {
         'SId': r[0],
         'SName': r[1],
-        'Trigger': TRIGGER_MAP[r[2]][1],
-        'Func': TRIGGER_FUNC_MAP[r[3]][1],
+        'Type': TYPE_MAP[r[2]][1],
+        'Func': FUNC_MAP[r[3]][1],
         'Threshold': r[4],
+        'Misc': "" if len(r) < 6 else r[5],
     }
     print_table_row(pattern, row_values, sys.stdout)
 
@@ -260,4 +314,41 @@ def print_monitor_rules(rule_sets):
         for rule in list(rules.values()):
             for sub_rule in rule:
                 print_row(sub_rule)
+
+def get_msg(r, s):
+    return TRIGGER_MESSAGE_PATTERN.format(
+        stime=s.time,
+        sid=s.secId,
+        sname=s.name,
+        ttype=TYPE_MAP[r[2]][1],
+        tfunc=FUNC_MAP[r[3]][1],
+        threshold=r[4],
+        misc="" if len(r) < 6 else r[5],
+        value=TYPE_MAP[r[2]][0](s),
+    )
+
+
+def send_msg(msg):
+    """."""
+    real_cmd = NOTIFY.format(msg)
+    subprocess.call(real_cmd, shell=True)
+
+def test(r):
+    s = get_quote('150019', 'MARKET_SZ')
+    if le(s, 1, .96):
+        msg = "{} {} pb:{:.3f}".format(s.name, s.time, s.pbr)
+        real_cmd = NOTIFY.format(msg)
+        subprocess.call(real_cmd, shell=True)
+
+def loop():
+    i = sys.argv[1]
+    while True:
+        if not valid_deal_time():
+            msg = "Monitor is shut down. Bye!"
+            real_cmd = NOTIFY.format(msg)
+            subprocess.call(real_cmd, shell=True)
+            break;
+
+        test(i)
+        time.sleep(60)
 

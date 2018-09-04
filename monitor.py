@@ -9,7 +9,6 @@ import logging
 import os
 import pprint
 import sys
-import subprocess
 import threading
 import time
 import datetime
@@ -21,36 +20,11 @@ from multiprocessing.pool import ThreadPool
 
 from libs.common import valid_deal_time, nodup_generator, Security
 from libs.monitor import *
-from driver import getpbr, setup_output
+from libs.driver import getpbr, setup_output
 
 
-CMD = "notify '⚠️  💰ABRISK💰' \"{}\""
 stop_event = threading.Event()
 stop_event.clear()
-
-def test(r):
-    if le(s, 6, .96):
-        msg = "{} {} pb:{:.3f}".format(s[1], s[2], s[6])
-        real_cmd = CMD.format(msg)
-        subprocess.call(real_cmd, shell=True)
-
-def loop():
-    i = sys.argv[1]
-    while True:
-        if not valid_deal_time():
-            msg = "Monitor is shut down. Bye!"
-            real_cmd = CMD.format(msg)
-            subprocess.call(real_cmd, shell=True)
-            break;
-
-        test(i)
-        time.sleep(60)
-
-
-def trigger(msg):
-    real_cmd = CMD.format(msg)
-    subprocess.call(real_cmd, shell=True)
-
 
 def start_monitor(cfg, rule_sets):
 
@@ -73,17 +47,9 @@ def start_monitor(cfg, rule_sets):
                             .format(sid, category))
                         LOG.debug(sub_rules)
                     for r in sub_rules:
-                        if TRIGGER_FUNC_MAP[r[3]][0](s, r[2], r[4]):
-                            msg = TRIGGER_MESSAGE_PATTERN.format(
-                                stime=s.time,
-                                sid=sid,
-                                sname=s.name,
-                                trigger=TRIGGER_MAP[r[2]][1],
-                                tfunc=TRIGGER_FUNC_MAP[r[3]][1],
-                                threshold=r[4],
-                                value=TRIGGER_MAP[r[2]][0](s),
-                            )
-                            trigger(msg)
+                        if trigger(r, s):
+                           msg = get_msg(r, s)
+                           send_msg(msg)
         except Exception as e:
             LOG.error(e)
             return e

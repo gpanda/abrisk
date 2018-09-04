@@ -24,8 +24,7 @@ import time
 
 import Queue
 
-from libs.common import is_sec_id
-import driver
+from libs import common, driver
 
 LOG_FORMAT = "%(asctime)-15s %(threadName)s %(message)s"
 logging.basicConfig(format=LOG_FORMAT)
@@ -174,7 +173,7 @@ def _parse_input_1(cfg):
                     continue
                 fields = line.split(',')
                 sec_id = string.strip(fields[0])
-                if is_sec_id(sec_id):
+                if common.is_sec_id(sec_id):
                     fund_pool[filename][sec_id] = [].extend(fields[1:])
 
     funds = config['funds']
@@ -182,7 +181,7 @@ def _parse_input_1(cfg):
         category = 'Quick_show'
         fund_pool[category] = collections.OrderedDict()
         for fund in funds:
-            if is_sec_id(fund):
+            if common.is_sec_id(fund):
                 fund_pool[category][fund] = []
 
     return fund_pool

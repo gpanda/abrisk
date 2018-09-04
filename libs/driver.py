@@ -12,7 +12,7 @@ import sys
 import codecs
 import locale
 
-from libs.common import print_table_row
+from common import print_table_row
 
 #print(locale.getpreferredencoding())
 #sys.stdout = codecs.getwriter(locale.getpreferredencoding())(sys.stdout)
