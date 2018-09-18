@@ -249,6 +249,8 @@ def parse_input_1(cfg):
                 if line.startswith("#"):
                     continue
                 cols = re.split(SEPARATOR, line)
+                if not cols[-1].strip():
+                    cols = cols[:-1]
                 if len(cols) < 5:
                     continue
                 for c in cols:
