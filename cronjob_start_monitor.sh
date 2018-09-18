@@ -1,7 +1,6 @@
 cd `dirname $0`
 . getos.sh
-. ./venv.incl
-. $VENV/bin/activate
+. ./activate.sh
 #./monitor.py --fin B1.mon A1.mon today.mon
 ./monitor.py --fin today.mon
 deactivate

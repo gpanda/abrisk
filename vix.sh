@@ -1,9 +1,7 @@
 #!/usr/bin/env sh
 cd `dirname $0`
 
-. ./venv.incl
-. $VENV/bin/activate
-
+. ./activate.sh
 . funcs.sh
 
 CMD="python ./vix.py"

@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 cd `dirname $0`
-. ./venv.incl
-. $VENV/bin/activate
+. ./getos.sh
+. ./activate.sh
 
 . funcs.sh
 
