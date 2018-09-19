@@ -18,7 +18,7 @@ import Queue
 from concurrent.futures import ThreadPoolExecutor
 from multiprocessing.pool import ThreadPool
 
-from libs.common import valid_deal_time, nodup_generator, Security
+from libs.common import valid_deal_time, noon_break, nodup_generator, Security
 from libs.monitor import *
 from libs.driver import getpbr, setup_output
 
@@ -65,6 +65,8 @@ def start_monitor(cfg, rule_sets):
         interval = cfg['interval']
         terminated = False
         while not terminated:
+            if noon_break(interval):
+                print("Resume!")
             loop_start = time.time()
             out1 = exec1.map(fetch_security, sids)
             with ThreadPoolExecutor(max_workers=max_workers) as exec2:
@@ -72,10 +74,10 @@ def start_monitor(cfg, rule_sets):
                 for result in out2:
                     if isinstance(result, Exception):
                         LOG.error(result)
-                if not valid_deal_time():
-                    terminated = True
-                loop_end = time.time()
-                time.sleep(interval + loop_start - loop_end)
+            if not valid_deal_time(interval):
+                terminated = True
+            loop_end = time.time()
+            time.sleep(interval + loop_start - loop_end)
 
 
 def main():
