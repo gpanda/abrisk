@@ -63,8 +63,7 @@ def start_monitor(cfg, rule_sets):
         sids = set(sid for category, rules in rule_sets.items()
                        for sid in rules.keys())
         interval = cfg['interval']
-        terminated = False
-        while not terminated:
+        while True:
             if noon_break(interval):
                 print("Resume!")
             loop_start = time.time()
@@ -75,7 +74,8 @@ def start_monitor(cfg, rule_sets):
                     if isinstance(result, Exception):
                         LOG.error(result)
             if not valid_deal_time(interval):
-                terminated = True
+                print("Not in trading hours, exit.")
+                break
             loop_end = time.time()
             time.sleep(interval + loop_start - loop_end)
 

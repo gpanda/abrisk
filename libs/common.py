@@ -48,26 +48,27 @@ def is_sec_id(chars):
     return SEC_ID_PATTERN.match(chars)
 
 def valid_deal_time(interval=0):
-    now = datetime.datetime.now()
-    deal_start = now.replace(hour=9, minute=30, second=0)
-    deal_end = now.replace(hour=15, minute=0, second=0) + \
-        datetime.timedelta(seconds=interval)
-    if now < deal_start or now >= deal_end:
-        return False
-    w = now.isoweekday()
-    if w < 1 or w > 5:
-        return False
-    return True
+   now = datetime.datetime.now()
+   deal_start = now.replace(hour=9, minute=30, second=0)
+   deal_end = now.replace(hour=15, minute=0, second=0) + \
+       datetime.timedelta(seconds=interval)
+   if now < deal_start or now >= deal_end:
+       return False
+   w = now.isoweekday()
+   if w < 1 or w > 5:
+       return False
+   return True
 
 def noon_break(interval=0):
     now = datetime.datetime.now()
-    break_start = now.replace(hour=11, minute=30, second=0)
-    break_end = now.replace(hour=13, minute=0, second=0) + \
+    break_start = now.replace(hour=11, minute=30, second=0) + \
         datetime.timedelta(seconds=interval)
+    break_end = now.replace(hour=15, minute=0, second=0)
     if now < break_start or now >= break_end:
         return False
     print("Noon break...")
     delta = break_end - datetime.datetime.now()
+    print("for " + str(delta.total_seconds()) + "seconds.")
     time.sleep(delta.total_seconds())
     return True
 
