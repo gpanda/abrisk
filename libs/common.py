@@ -63,7 +63,7 @@ def noon_break(interval=0):
     now = datetime.datetime.now()
     break_start = now.replace(hour=11, minute=30, second=0) + \
         datetime.timedelta(seconds=interval)
-    break_end = now.replace(hour=15, minute=0, second=0)
+    break_end = now.replace(hour=13, minute=0, second=0)
     if now < break_start or now >= break_end:
         return False
     print("Noon break...")
