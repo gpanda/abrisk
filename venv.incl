@@ -1,1 +1,1 @@
-export VENV=${HOME}/rhub_big/var/abrisk.venv
+export VENV="$RHUB_LOCAL/var/abrisk.venv"
