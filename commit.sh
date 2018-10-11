@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 git co dev
 git add .
-git staus
+git status
 git commit -a
 git co master
 git fetch
