@@ -1,7 +1,8 @@
 #!/bin/sh
 . ./venv.incl
+mkdir -p "$VENV"
 
-pip install virtualenv
+sudo pip install virtualenv
 virtualenv $VENV
 . $VENV/bin/activate
 pip install requests requests_cache lxml
