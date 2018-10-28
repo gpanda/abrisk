@@ -1,12 +1,12 @@
 #!/usr/bin/env sh
 cd `dirname $0`
 
-. getos.sh
+. ./getos.sh
 . ./activate.sh
-. funcs.sh
+. ./funcs.sh
 
 CMD="python ./vix.py"
-FOLDER="vix.history"
+FOLDER="history.vix"
 
 record_history_us
 

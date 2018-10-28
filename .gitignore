@@ -69,7 +69,7 @@ demo_cache.sqlite
 
 history/*
 history.favourites/*
-vix.history/*
+history.vix/*
 history.misc/*
 tmp
 structuredfunds/*

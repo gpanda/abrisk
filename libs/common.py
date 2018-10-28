@@ -10,11 +10,19 @@ from builtins import object
 __author__ = 'gpanda'
 
 import datetime
+import logging
 import re
+import sys
 import time
 
 SEC_ID_PATTERN_STRING = "^\d{6}$"
 SEC_ID_PATTERN = re.compile(SEC_ID_PATTERN_STRING)
+
+LOG_FORMAT = "%(asctime)-15s %(threadName)s %(message)s"
+logging.basicConfig(format=LOG_FORMAT)
+LOG = logging.getLogger("abrisk")
+LOG.addHandler(logging.StreamHandler(sys.stdout))
+LOG.setLevel(logging.INFO)
 
 class Security(object):
     """Security data structure
@@ -92,3 +100,11 @@ def nodup_generator(g):
         if i not in s:
             yield i
             s.add(i)
+
+
+class AbriskError(Exception):
+
+    def __init__(self, name=None, e=None):
+        self.name = name
+        self.e = e
+

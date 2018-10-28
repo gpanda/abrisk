@@ -13,7 +13,6 @@ __author__ = 'gpanda'
 import argparse
 import collections
 import fileinput
-import logging
 import os
 import pprint
 import re
@@ -24,13 +23,8 @@ import time
 
 import Queue
 
-from libs import common, driver
-
-LOG_FORMAT = "%(asctime)-15s %(threadName)s %(message)s"
-logging.basicConfig(format=LOG_FORMAT)
-LOG = logging.getLogger("abrisk")
-LOG.addHandler(logging.StreamHandler(sys.stdout))
-LOG.setLevel(logging.INFO)
+from libs import driver
+from libs.common import LOG, is_sec_id, AbriskError
 
 config = {}
 
@@ -71,6 +65,7 @@ def _initialize_input_parser():
     )
 
     parser.add_argument(
+
         '--fin',
         default="default.0",
         nargs="*",
@@ -172,22 +167,22 @@ def _parse_input_1(cfg):
                 if line.startswith("#"):
                     continue
                 fields = line.split(',')
-                sec_id = string.strip(fields[0])
-                if common.is_sec_id(sec_id):
-                    fund_pool[filename][sec_id] = [].extend(fields[1:])
+                sid = string.strip(fields[0])
+                if is_sec_id(sid):
+                    fund_pool[filename][sid] = [].extend(fields[1:])
 
     funds = config['funds']
     if funds[0]:
         category = 'Quick_show'
         fund_pool[category] = collections.OrderedDict()
         for fund in funds:
-            if common.is_sec_id(fund):
+            if is_sec_id(fund):
                 fund_pool[category][fund] = []
 
     return fund_pool
 
 
-def work_flow(input_queue, output_queue):
+def work_flow(input_queues, output_queues, error_queues):
     """
     TODO: comments
     """
@@ -199,17 +194,17 @@ def work_flow(input_queue, output_queue):
     # print("*** Thread-{0}:{1} *** Enters work_flow >>>"
     #       .format(local.thread_name, time.time()))
 
-    def retrieve_data(sec_id):
+    def retrieve_data(sid):
         """
         TODO: comments
         """
-        LOG.debug("Retrieving data for %s", sec_id)
+        LOG.debug("Retrieving data for %s", sid)
         # print("Thread-{0}: Retrieving data for {1}"
-        #       .format(local.thread_name, sec_id))
-        fund_raw_data = driver.getpbr(sec_id)
+        #       .format(local.thread_name, sid))
+        fund_raw_data = driver.getpbr(sid)
         if not fund_raw_data:
             return None
-        fund = Fund(sec_id,
+        fund = Fund(sid,
                     name=fund_raw_data[2],
                     time=fund_raw_data[0],
                     price=fund_raw_data[4],
@@ -220,21 +215,25 @@ def work_flow(input_queue, output_queue):
         return fund
 
 
-    for category, queue in  input_queue.items():
+    for c, iq in input_queues.items():
+        sid=None
         try:
-            LOG.debug("Switching to category %s", category)
+            LOG.debug("Switching to category %s", c)
             # print("Thread-{0}: Switching to category {1}"
-            #      .format(local.thread_name, category))
-            while not queue.empty():
-                sec_id = queue.get(False)
-                fund = retrieve_data(sec_id)
+            #      .format(local.thread_name, c))
+            while not iq.empty():
+                sid = iq.get(False)
+                fund = retrieve_data(sid)
                 if fund:
-                    output_queue[category].put(fund)
-            LOG.debug("Leaving category %s", category)
+                    output_queues[c].put(fund)
+            LOG.debug("Leaving category %s", c)
             # print("Thread-{0}: Leaving category {1}"
-            #       .format(local.thread_name, category))
-        except Queue.Empty as exp:
-            print(exp)
+            #       .format(local.thread_name, c))
+        except Queue.Empty as e:
+            LOG.info("Unexpected Queue.Empty Exception occurs, %s", e)
+        except Exception as e:
+            ename = "T:[" + local.thread_name + "]C:[" + c + "]S:[" + sid + "]"
+            error_queues[c].put(AbriskError(ename, e))
     LOG.debug("*** Exits from work_flow() <<<")
     # print("*** Thread-{0} *** Exits from work_flow <<<"
     #      .format(local.thread_name))
@@ -248,13 +247,15 @@ def sync(fund_pool):
     ** Retrieving fund data, refining and sorting them.
 
     """
-    fund_input_queues = {}
-    fund_output_queues = {}
+    input_queues = {}
+    output_queues = {}
+    error_queues = {}
     for category, pool in fund_pool.items():
-        fund_input_queues[category] = Queue.Queue(len(pool))
-        for sec_id in sorted(pool.keys()):
-            fund_input_queues[category].put(sec_id)
-        fund_output_queues[category] = Queue.PriorityQueue(len(pool))
+        input_queues[category] = Queue.Queue(len(pool))
+        for sid in sorted(pool.keys()):
+            input_queues[category].put(sid)
+        output_queues[category] = Queue.PriorityQueue(len(pool))
+        error_queues[category] = Queue.Queue(len(pool))
 
     workers = {}
     worker_number = config['workers']
@@ -262,22 +263,29 @@ def sync(fund_pool):
         workers[i] = threading.Thread(
             target=work_flow,
             name=str(i),
-            args=[fund_input_queues, fund_output_queues],
+            args=[input_queues, output_queues, error_queues],
         )
         workers[i].start()
 
     for worker in workers.values():
         worker.join()
 
-    LOG.debug("All jobs have been done.")
+    rc = 0
+    for c, eq in error_queues.items():
+        if not eq.empty():
+            rc = 1
+            break
+    if rc == 0:
+        LOG.debug("All jobs have been done without errors.")
+    else:
+        LOG.debug("All jobs have been done, but there are errors.")
+    return output_queues, error_queues, rc
 
-    return fund_output_queues
 
+def report_fund_list(out_put_queues):
 
-def report_fund_list(fund_output_queues):
-
-    for category, priority_queue in fund_output_queues.items():
-        LOG.info("Category-%s", category)
+    for category, priority_queue in out_put_queues.items():
+        LOG.debug("Category-%s", category)
         # print("Category-{0}".format(category))
         driver.setup_output(0, LOG)
         driver.print_header()
@@ -292,9 +300,9 @@ def show_fund_pool(fund_pool):
     for category, pool in fund_pool.items():
         LOG.debug("Category %s", category)
         # print("Category {category}".format(category=category))
-        for sec_id, extras in pool.items():
-            LOG.debug("%s, %s", sec_id, extras)
-            # print("{0}, {1}".format(sec_id, extras))
+        for sid, extras in pool.items():
+            LOG.debug("%s, %s", sid, extras)
+            # print("{0}, {1}".format(sid, extras))
 
 
 def main():
@@ -307,10 +315,16 @@ def main():
     fund_pool = _parse_input_1(cfg)
     # show_fund_pool(fund_pool)
     begin = time.time()
-    fund_list = sync(fund_pool)
+    funds, errors, rc = sync(fund_pool)
+    if rc != 0:
+        for c, eq in errors.items():
+            print(c, file=sys.stderr)
+            while not eq.empty():
+                print(eq.get().name, file=sys.stderr)
+        sys.exit(1)
     end = time.time()
-    report_fund_list(fund_list)
-    LOG.info("Time usage: %s seconds; Workers: %s",
+    report_fund_list(funds)
+    LOG.debug("Time usage: %s seconds; Workers: %s",
              end - begin, config['workers'])
     # print("Time usage: {0} seconds; Workers: {1}"
     #       .format(end - begin, config['workers']))

@@ -12,7 +12,7 @@ import sys
 import codecs
 import locale
 
-from common import print_table_row
+from common import print_table_row, LOG
 
 #print(locale.getpreferredencoding())
 #sys.stdout = codecs.getwriter(locale.getpreferredencoding())(sys.stdout)
@@ -66,9 +66,9 @@ HQSINA_QUOTE_SEP = u","
 # http request header patterns
 HTTP_HEADER_CONTENT_TYPE_CHARSET_REGEX=r"charset=(\w+)"
 
-
+# http request timeout
+HTTP_REQUEST_TIMEOUT = 8
 # =============================================================================
-
 
 def get_page_content(page):
     """."""
@@ -79,7 +79,7 @@ def get_page_content(page):
     # signal.alarm(timeout)
 
     try:
-        resp = requests.get(page)
+        resp = requests.get(page, timeout=HTTP_REQUEST_TIMEOUT)
         encoding = resp.encoding
         ct_hdr = resp.headers['Content-Type']
         if ct_hdr:
@@ -96,6 +96,7 @@ def get_page_content(page):
         # print("Error occurred during request of ({page}) ". \
         #      format({'page': page}))
         LOG.info("Error occurred during request of %s", page)
+        raise
 
     # signal.alarm(0)          # Disable the alarm
 
@@ -202,9 +203,6 @@ OUTPUT_PATTERN = {
 # current setup
 CURRENT_OUTPUT_FORMAT = None
 CURRENT_FOUT = None
-
-LOG = None
-
 
 def print_header():
     if not CURRENT_OUTPUT_FORMAT:
