@@ -19,8 +19,8 @@
 
 set -o nounset                              # Treat unset variables as an error
 
-# FROM=../history
-FROM=../history.favourites
+FROM=../history
+# FROM=../history.favourites
 grep "$1" -r "$FROM" | sort \
 | awk -F"|" '!/\W0.0\W/ {gsub(/ /, "", $0); print $5, $6, $7, $8}' > "$1"
 
