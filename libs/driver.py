@@ -10,6 +10,9 @@ from html.parser import HTMLParser
 import re
 import sys
 
+reload(sys)
+sys.setdefaultencoding('utf8')
+
 import requests
 
 from .common import print_table_row, LOG
