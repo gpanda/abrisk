@@ -5,24 +5,14 @@ from __future__ import print_function
 
 __author__ = 'gpanda'
 
+
+from html.parser import HTMLParser
 import re
-import requests
 import sys
 
-import codecs
-import locale
+import requests
 
-from common import print_table_row, LOG
-
-#print(locale.getpreferredencoding())
-#sys.stdout = codecs.getwriter(locale.getpreferredencoding())(sys.stdout)
-
-reload(sys)
-sys.setdefaultencoding('utf8')
-
-
-import HTMLParser
-htmlparser = HTMLParser.HTMLParser()
+from .common import print_table_row, LOG
 
 UTF8_ENCODING = "UTF-8"
 
@@ -118,10 +108,9 @@ def get_nav_url(qid):
 
 def get_market(qid):
     """."""
-    if qid / 100000 == 1:
+    if qid / 100000 < 3:
         return MARKET_SZ
-    else:
-        return MARKET_SH
+    return MARKET_SH
 
 def get_nav(qid):
     """."""
@@ -154,7 +143,7 @@ def getpbr(qid):
     if _nav:
         _nav = float(_nav)
     else:
-        return
+        return None
 
     # get current quote information, such as price
     market = MARKET_XX

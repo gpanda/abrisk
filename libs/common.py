@@ -4,16 +4,17 @@
 from __future__ import print_function
 from __future__ import division
 
-from past.builtins import cmp
-from builtins import object
-
-__author__ = 'gpanda'
-
 import datetime
 import logging
 import re
 import sys
 import time
+
+from builtins import object
+from past.builtins import cmp
+
+__author__ = 'gpanda'
+
 
 SEC_ID_PATTERN_STRING = "^\d{6}$"
 SEC_ID_PATTERN = re.compile(SEC_ID_PATTERN_STRING)
@@ -24,15 +25,18 @@ LOG = logging.getLogger("abrisk")
 LOG.addHandler(logging.StreamHandler(sys.stdout))
 LOG.setLevel(logging.INFO)
 
-class Security(object):
-    """Security data structure
+class Fund:
+    """Fund data structure
+
+    pbr = price / book value (nav), an important index to sort funds
+
     """
 
-    def __init__(self, secId, name=None, time=None, price=float(0),
+    def __init__(self, sid, name=None, time=None, price=float(0),
                  volume=float(0), nav=float(1)):
-        """Initialize Security object
+        """Initialize Fund object
 
-        :param secId: security id
+        :param sid: security id
         :param name: name
         :param time: data timestamp
         :param price: security price
@@ -40,7 +44,7 @@ class Security(object):
         :param nav: security (fund) net asset value or book value
 
         """
-        self.secId = secId
+        self.sid = sid
         self.name = name
         self.time = time
         self.price = price
@@ -48,9 +52,35 @@ class Security(object):
         self.nav = nav
         self.pbr = self.price / self.nav
 
-    def __cmp__(self, other):
-        return cmp(self.pbr, other.pbr)
+    def __lt__(self, other):
+        return self.pbr < other.pbr
 
+class Security:
+    """Security data structure
+    """
+
+    def __init__(self, sid, name=None, time=None, price=float(0),
+                 volume=float(0), nav=float(1)):
+        """Initialize Security object
+
+        :param sid: security id
+        :param name: name
+        :param time: data timestamp
+        :param price: security price
+        :param volume: exchange volume (unit: 0.1 billion)
+        :param nav: security (fund) net asset value or book value
+
+        """
+        self.sid = sid
+        self.name = name
+        self.time = time
+        self.price = price
+        self.volume = volume
+        self.nav = nav
+        self.pbr = self.price / self.nav
+
+    def __lt__(self, other):
+        return self.pbr < other.pbr
 
 def is_sec_id(chars):
     return SEC_ID_PATTERN.match(chars)

@@ -39,7 +39,7 @@ def start_monitor(cfg, rule_sets):
     def test_against_rules(s):
         try:
             for category, rules in rule_sets.items():
-                sid = s.secId
+                sid = s.sid
                 if sid in rules:
                     sub_rules = rules[sid]
                     if LOG.isEnabledFor(logging.DEBUG):

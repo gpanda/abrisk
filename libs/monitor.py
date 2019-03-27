@@ -254,7 +254,7 @@ def parse_input_1(cfg):
                 if len(cols) < 5:
                     continue
                 for c in cols:
-                    c = string.strip(c)
+                    c = c.strip()
                 cols[2] = int(cols[2])
                 cols[4] = float(cols[4])
                 sid = cols[0]
@@ -273,7 +273,7 @@ def parse_input_1(cfg):
             if len(cols) < 5:
                 continue
             for c in cols:
-                c = string.strip(c)
+                c = c.strip()
             cols[2] = int(cols[2])
             cols[4] = float(cols[4])
             sid = cols[0]
@@ -320,7 +320,7 @@ def print_monitor_rules(rule_sets):
 def get_msg(r, s):
     return TRIGGER_MESSAGE_PATTERN.format(
         stime=s.time,
-        sid=s.secId,
+        sid=s.sid,
         sname=s.name,
         ttype=TYPE_MAP[r[2]][1],
         tfunc=FUNC_MAP[r[3]][1],
