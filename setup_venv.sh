@@ -6,7 +6,7 @@
 mkdir -p "$VENV"
 
 pip3 install virtualenv
-virtualenv $VENV
+virtualenv -p python3 $VENV
 . $VENV/bin/activate
 pip3 install requests requests_cache lxml
 pip3 install future coverage pylint caniusepython3 tox
