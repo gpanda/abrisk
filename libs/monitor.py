@@ -10,7 +10,6 @@ import argparse
 import logging
 import multiprocessing
 import re
-import string
 import subprocess
 import sys
 import time
@@ -159,7 +158,7 @@ def initialize_input_parser():
 
     parser.add_argument(
         '--fin', '-i',
-        type=file,
+        type=open,
         nargs="*",
         metavar="FILE",
         help="a input file contains a rule list."

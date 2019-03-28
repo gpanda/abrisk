@@ -4,19 +4,16 @@
 from __future__ import print_function
 from __future__ import division
 
+__author__ = 'gpanda'
+
 import datetime
 import logging
 import re
 import sys
 import time
 
-from builtins import object
-from past.builtins import cmp
 
-__author__ = 'gpanda'
-
-
-SEC_ID_PATTERN_STRING = "^\d{6}$"
+SEC_ID_PATTERN_STRING = r"^\d{6}$"
 SEC_ID_PATTERN = re.compile(SEC_ID_PATTERN_STRING)
 
 LOG_FORMAT = "%(asctime)-15s %(threadName)s %(message)s"

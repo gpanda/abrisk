@@ -42,6 +42,7 @@ def _initialize_input_parser():
         default="default.0",
         nargs="*",
         metavar="FILE",
+        type=open,
         help="Security list input file."
     )
 

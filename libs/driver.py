@@ -5,17 +5,12 @@ from __future__ import print_function
 
 __author__ = 'gpanda'
 
-
-from html.parser import HTMLParser
 import re
 import sys
 
-reload(sys)
-sys.setdefaultencoding('utf8')
-
 import requests
-
 from .common import print_table_row, LOG
+
 
 UTF8_ENCODING = "UTF-8"
 

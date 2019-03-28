@@ -13,8 +13,6 @@ import threading
 import time
 import datetime
 
-import Queue
-
 from concurrent.futures import ThreadPoolExecutor
 from multiprocessing.pool import ThreadPool
 
@@ -33,7 +31,7 @@ def start_monitor(cfg, rule_sets):
         if not raw_s:
             return None
         s = Security(sid, name=raw_s[2], time=raw_s[0], price=raw_s[4],
-            volume=raw_s[5], nav=raw_s[3])
+                     volume=raw_s[5], nav=raw_s[3])
         return s
 
     def test_against_rules(s):
@@ -43,13 +41,13 @@ def start_monitor(cfg, rule_sets):
                 if sid in rules:
                     sub_rules = rules[sid]
                     if LOG.isEnabledFor(logging.DEBUG):
-                        LOG.debug("select rules for {} in category {}"
-                            .format(sid, category))
+                        LOG.debug("select rules for %s in category %s",
+                                  sid, category)
                         LOG.debug(sub_rules)
                     for r in sub_rules:
                         if trigger(r, s):
-                           msg = get_msg(r, s)
-                           send_msg(msg)
+                            msg = get_msg(r, s)
+                            send_msg(msg)
         except Exception as e:
             LOG.error(e)
             return e
