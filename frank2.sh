@@ -7,7 +7,7 @@ cd `dirname $0`
 
 . ./funcs.sh
 
-CMD="python ./fundlist.py --fin B1 A1 --workers $nprocs"
+CMD="python ./fundlist.py --fin A1 B1 --workers $nprocs"
 FOLDER="history.favourites"
 
 record_history

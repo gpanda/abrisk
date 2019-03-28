@@ -37,13 +37,10 @@ def _initialize_input_parser():
     )
 
     parser.add_argument(
-
         '--fin',
-        default="default.0",
         nargs="*",
         metavar="FILE",
-        type=open,
-        help="Security list input file."
+        help="One or more security list files as input."
     )
 
     parser.add_argument(
@@ -92,10 +89,10 @@ def _parse_input_0(opts):
 
     # retrieve fund list files
     files = opts['fin']
-    if not isinstance(files, list):
-        files = [files]
-
-    config['fin'] = files
+    if files:
+        if not isinstance(files, list):
+            files = [files]
+        config['fin'] = files
 
     workers = int(opts['workers'])
     if  workers > 0:
@@ -111,10 +108,10 @@ def _parse_input_0(opts):
         config['tail'] = tail
 
     funds = opts['funds']
-    if not isinstance(funds, list):
-        funds = [funds]
-
-    config['funds'] = funds
+    if funds:
+        if not isinstance(funds, list):
+            funds = [funds]
+        config['funds'] = funds
 
     if opts['verbose']:
         config['debug'] = True
@@ -130,22 +127,25 @@ def _parse_input_1(cfg):
     # pprint.pprint(config)
     fund_pool = collections.OrderedDict()
 
-    files = cfg['fin']
-    for yaf in files:
-        if os.path.exists(yaf):
-            filename = os.path.basename(yaf)
-            # print("{filename}".format(filename=filename))
-            fund_pool[filename] = collections.OrderedDict()
-            for line in fileinput.input(yaf):
+    files = cfg['fin'] if 'fin' in cfg else None
+    if files:
+        for fname in files:
+            if os.path.isfile(fname):
+                fund_pool[fname] = collections.OrderedDict()
+            else:
+                files.remove(fname)
+
+        with fileinput.input(files=files) as f:
+            for line in f:
                 if line.startswith("#"):
                     continue
                 fields = line.split(',')
                 sid = fields[0].strip()
                 if is_sec_id(sid):
-                    fund_pool[filename][sid] = [].extend(fields[1:])
+                    fund_pool[fileinput.filename()][sid] = [].extend(fields[1:])
 
-    funds = config['funds']
-    if funds[0]:
+    funds = config['funds'] if 'funds' in config else None
+    if funds:
         category = 'Quick_show'
         fund_pool[category] = collections.OrderedDict()
         for fund in funds:
