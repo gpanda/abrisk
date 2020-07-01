@@ -14,9 +14,6 @@ import locale
 
 from lxml import html
 
-reload(sys)
-sys.setdefaultencoding('utf8')
-
 url='http://www.cboe.com/delayedquote/advanced-charts?ticker=VIX'
 
 def get_vix():
