@@ -1,0 +1,8 @@
+requests
+requests_cache
+lxml
+future
+coverage
+pylint
+caniusepython3
+tox
